@@ -166,11 +166,23 @@ else:
                 y='cargo',
                 x='quantidade',
                 orientation='h',
-                color='quantidade',
-                color_continuous_scale=px.colors.sequential.Sunset,
+                text='quantidade',
+                color_discrete_sequence=['#8b83ee'],
                 template='plotly_dark'
             )
-            fig_cargos.update_layout(yaxis={'categoryorder': 'total ascending'}, height=350, showlegend=False)
+            fig_cargos.update_traces(
+                texttemplate='%{x:,.0f}',
+                textposition='outside',
+                cliponaxis=False,
+                hovertemplate='<b>%{y}</b><br>Registros: %{x:,.0f}<extra></extra>'
+            )
+            fig_cargos.update_layout(
+                yaxis={'categoryorder': 'total ascending'},
+                xaxis_title='Quantidade de registros',
+                margin=dict(r=65),
+                height=350,
+                showlegend=False
+            )
             st.plotly_chart(fig_cargos, use_container_width=True)
 
         g_col3, g_col4 = st.columns(2)
@@ -196,15 +208,26 @@ else:
             st.subheader("Proporção de Trabalho Remoto / Presencial")
             remoto_counts = df_filtrado['remoto'].value_counts().reset_index()
             remoto_counts.columns = ['tipo_trabalho', 'quantidade']
+            remoto_counts['percentual'] = 100 * remoto_counts['quantidade'] / remoto_counts['quantidade'].sum()
+            remoto_counts['legenda'] = remoto_counts.apply(
+                lambda r: f"{r['tipo_trabalho']} — {r['percentual']:.1f}% ({int(r['quantidade']):,} registros)",
+                axis=1
+            )
             fig_pie = px.pie(
                 remoto_counts,
-                names='tipo_trabalho',
+                names='legenda',
                 values='quantidade',
                 hole=0.4,
                 color_discrete_sequence=px.colors.qualitative.Prism,
-                template='plotly_dark'
+                template='plotly_dark',
+                custom_data=['tipo_trabalho', 'quantidade']
             )
-            fig_pie.update_layout(height=350)
+            fig_pie.update_traces(
+                textinfo='percent',
+                textposition='inside',
+                hovertemplate='<b>%{customdata[0]}</b><br>Registros: %{value:,.0f}<br>Percentual: %{percent}<extra></extra>'
+            )
+            fig_pie.update_layout(height=350, legend_title_text='Modalidade · % · registros')
             st.plotly_chart(fig_pie, use_container_width=True)
 
         # Comparação Salarial entre Países
